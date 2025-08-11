@@ -27,16 +27,16 @@ def process_column_a_duplicates(df: pd.DataFrame, col_A: str, col_B: str) -> pd.
         print(f"No duplicates found in {col_A}.")
         return df
 
-    print(f"Found {grouped.ngroups} group(s) of duplicates in {col_A}.")
+    print(f"Found {grouped.ngroups} groups of duplicates in {col_A}")
 
     for name, group in grouped:
-        print(f"\nProcessing duplicates for value: '{name}' in {col_A}")
+        print(f"\nProcessing duplicates of value: '{name}' in {col_A} colomn")
 
         if group[col_B].nunique() == 1:
             print(f"  - Values in {col_B} are identical. Keeping one and deleting others.")
             indices_to_drop.extend(group.index[1:])
         else:
-            print(f"  - CONFLICT: Values in {col_B} are different. Please choose which row to KEEP.")
+            print(f"\nValues in {col_B} are different. Please choose which row to KEEP")
             print(group.to_string())
 
             valid_indices = group.index.tolist()
@@ -44,7 +44,7 @@ def process_column_a_duplicates(df: pd.DataFrame, col_A: str, col_B: str) -> pd.
 
             while chosen_index not in valid_indices:
                 try:
-                    choice = int(input(f"  Enter the index of the row to KEEP {valid_indices}: "))
+                    choice = int(input(f"   Enter the index of the row you wish to keep {valid_indices}: "))
                     if choice in valid_indices:
                         chosen_index = choice
                     else:
@@ -82,44 +82,43 @@ def process_column_b_duplicates(df: pd.DataFrame, col_B: str) -> pd.DataFrame:
         print(group.to_string())
 
         user_choice = ''
-        while user_choice not in ['yes', 'no']:
+        while user_choice not in ['yes', 'no', 'y', 'n']:
             user_choice = input("Do you want to provide a new value for one of these? (yes/no): ").lower().strip()
 
-        if user_choice == 'yes':
+        if user_choice == 'yes' or 'y':
             valid_indices = group.index.tolist()
             chosen_index = None
 
             while chosen_index not in valid_indices:
                 try:
-                    choice = int(input(f"  Enter the index of the row to CHANGE {valid_indices}: "))
+                    choice = int(input(f"  Index of the row to modify {valid_indices}: "))
                     if choice in valid_indices:
                         chosen_index = choice
                     else:
                         print("  Invalid index. Please choose one of the available indices.")
                 except ValueError:
-                    print("  Invalid input. Please enter a number.")
+                    print(" \nInvalid input. Input has to be a number")
 
             new_value = input(f"  Enter the new value for Column B at index {chosen_index}: ")
             df.loc[chosen_index, col_B] = new_value
             print(f"  - Updated index {chosen_index} with new value '{new_value}'.")
         else:
-            print("  - Skipping this group. The duplicates will remain.")
-            print(f"  - NOTE: To prevent an infinite loop, we will stop checking {col_B}.")
-            print(f"    Re-run the script if you want to process other duplicates in {col_B}.")
+            print("  The duplicates will remain.")
+            print(f"  To prevent an infinite loop, we will stop checking {col_B}.")
+            print(f"   Re-run the script if you want to process other duplicates in {col_B}.")
             break
 
     return df
 
 def main():
 
-    print("Excel Sheet Cleaner Utility")
-    print("=" * 50)
+    print(" " *25 + "Excel Sheet Cleaner")
 
     while True:
         input_file_path = input("Enter the path to your Excel file: ")
         if os.path.exists(input_file_path):
             break
-        print(f"Error: File not found at '{input_file_path}'. Please check the path and try again.")
+        print(f" File not found at '{input_file_path}'. Please check the path and try again.")
 
     try:
         xls = pd.ExcelFile(input_file_path)
@@ -144,32 +143,28 @@ def main():
         col_A = input("Enter the name of first column of your Excel file: ").strip()
         col_B = input("Enter the name of second column of your Excel file: ").strip()
         if col_A not in df.columns or col_B not in df.columns:
-            print(f"\nError: The Excel sheet must contain {col_A} and {col_B}.")
-            print("Please rename your columns and re-run the script.")
+            print(f"\nError: The Excel sheet does not contain {col_A} and {col_B}. \nExiting")
             return
 
     except Exception as e:
-        print(f"An error occurred while reading the Excel file: {e}")
+        print(f"Error {e} occurred while reading file")
         return
 
     print("\nOriginal Data:")
     print(df)
 
 
-#Clean up completely empty rows first.
     df_after_empty_removal = remove_empty_rows(df.copy())
 
-#Process Column A duplicates on the result of the previous step.
     df_after_a = process_column_a_duplicates(df_after_empty_removal.copy(), col_A, col_B)
 
-#Process Column B duplicates on the result of the first function.
     final_df = process_column_b_duplicates(df_after_a.copy(), col_B)
 
     try:
         final_df.to_excel(output_file, index=False)
-        print(f"\n✅ Success! The cleaned data has been saved to '{output_file}'")
+        print(f"\nThe cleaned data has been saved to '{output_file}'")
     except Exception as e:
-        print(f"\n❌ Error: Could not save the file. Reason: {e}")
+        print(f"\nCould not save the file. Error: {e}")
 
 if __name__ == "__main__":
     main()
